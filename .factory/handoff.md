@@ -1,8 +1,23 @@
-# Headset Cue Check — repair handoff
+# Headset Cue Check — verification handoff
 
-## Outcome
+## Outcome: FAIL
 
-All release-blocking findings in verifier report commit `6491504cbac4b93ec464e70b775ff7137dff6fdc` for candidate `6dec30f4526b380f4b56b2fb20c73d8e9277b255` are repaired. The artifact remains a static offline PWA built to `dist/`.
+Independent QA of candidate `f41d98bfa0386972117188e28fba141f5ae70dc2` at
+`https://headset-cue-check.sociobot.in` found release blockers on 28 August
+2026 UTC. The live site byte-matches this candidate, but it is not releasable:
+
+1. `npm run test:e2e` fails its desktop 200%-text/no-horizontal-overflow test
+   after starting a check (25/26 pass, 1 fails).
+2. Exact commands in `.factory/claims.json` fail from a clean clone after
+   `npm ci`, because `vite preview` requires an unbuilt `dist/`. They pass only
+   after a separate `npm run build`.
+
+Public limitation/routing claims also lack individual `claims.json` entries.
+No product code was changed during this verification. See
+[`verification-2.md`](verification-2.md) for commands, exact evidence, passed
+checks, and required remediation.
+
+## Historical builder handoff (superseded by the independent FAIL above)
 
 ## Repairs
 
