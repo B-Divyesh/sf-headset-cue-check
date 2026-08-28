@@ -1,44 +1,62 @@
-# Headset Cue Check — build handoff
+# Headset Cue Check — independent verification handoff
 
-## Shipped
+## Verdict: FAIL
 
-- Six-step, screen-reader-operable listening sequence for speech clarity, left/right routing, mono compatibility, working volume, speech interruption, and three notification characters.
-- Bundled local speech plus Web Audio channel/tone generation; replay, stop, visible status, and recoverable audio-error guidance.
-- User ratings and settings persisted only in IndexedDB, including pause/resume and completed-card history.
-- Repeatable setup card with exact platform, device name, system/screen-reader levels, mono, spatial audio, ducking, notification choice, notes, and answer-based settings to revisit.
-- Copy, print, individual/all JSON export, JSON import with last-write-wins, confirmed removal, and undo.
-- Installable PWA manifest, 192/512 maskable icon, versioned service-worker shell cache, cache-first assets, navigation fallback, update notice, and explicit offline status.
-- Dedicated `/privacy/` and `/terms/` static entry points. No analytics, accounts, or third-party runtime scripts.
-- Original botanical field-guide visual system and generated hero with prompt/provenance in `.factory/design.md`.
+- Tested candidate: `6dec30f4526b380f4b56b2fb20c73d8e9277b255`
+- Tested URL: `https://headset-cue-check.sociobot.in`
+- Verification date: 28 August 2026 UTC
 
-## Verify
+The live deployment matches the candidate byte-for-byte for the checked build
+artifacts, and the core six-step workflow, local persistence, export/import,
+offline reload, accessibility scans, mobile layout, and production build mostly
+work. It is not releasable under the supplied contract.
 
-Run from a clean clone:
+Release blockers:
 
-```sh
-npm install
-npm test
-npm run build
-npm run test:e2e
-```
+- `.factory/claims.json` is missing, no `@claim:` tests exist, and shipped
+  claims are not inventoried.
+- No one-click sample-data demo or isolated demo storage exists; `/demo` and
+  `/?demo=1` are ordinary empty product views and `.factory/demo.md` is absent.
+- The first screen does not identify screen-reader users/accessibility staff.
+  On 390×844 mobile, the real start button is below the first viewport.
 
-Verified 2026-08-28:
+High-severity defects:
 
-- `npm audit`: 0 vulnerabilities.
-- Vitest: 4/4 passing.
-- Playwright 1.58.2: desktop Chromium and 390×844 mobile; 8/8 passing, including end-to-end card creation, keyboard path, axe WCAG A/AA scan, no console errors on initial load, and `context.setOffline(true)` reload.
-- Production bundle: 33.28 KB JS (11.18 KB gzip), 17.19 KB CSS (4.52 KB gzip); no runtime fonts; hero WebP 108 KB.
-- Lighthouse mobile: Performance 99, Accessibility 100, Best Practices 100; LCP 1.95 s, CLS 0, total blocking time 0 ms.
-- Factory `verify-url.sh`: HTTP 200, title/lang/main/alt checks passed, zero page or console errors (646 ms local load).
-- `dist/index.html`, `dist/privacy/index.html`, and `dist/terms/index.html` are present.
+- A weakly validated import with an invalid completion date is persisted,
+  throws `Invalid time value`, and blanks the app on every reload until browser
+  site data is cleared.
+- Keyboard focus on Import JSON lands on a clipped 1 px file input while the
+  visible label has no focus indicator.
 
-## Known limits
+Additional issues include missing CSP/frame protection, non-immutable 30-second
+asset caching, missing canonical/social/apple metadata, robots/sitemap and a
+real 404, a 19 px-high legal return link, and missing demo/copy-audit docs.
 
-- Browsers cannot reliably identify or change the physical output device or operating-system accessibility settings. The app states this before testing and on the setup card.
-- Audio perception is subjective; results are observations, not a medical assessment or hardware certification.
-- Copy depends on clipboard permission; Print and JSON export remain available if it is blocked.
+Verification results:
 
-## Next steps
+- `npm ci`: pass, 0 vulnerabilities
+- `npm test`: pass, 4/4
+- `npm run build`: pass, TypeScript plus Vite
+- `npm run test:e2e`: pass, 8/8 desktop and 390 px mobile
+- Live normal-flow axe: 0 serious/critical after state transitions settle
+- Live offline root, unvisited privacy route, and cached audio: pass
+- Live outbound traffic: same-origin GET only; no cookies or web-storage data
+- Live/candidate SHA-256 checks: all checked artifacts match
+- Mobile Lighthouse: 93 Performance, 100 Accessibility, 100 Best Practices,
+  100 SEO; LCP 1.7 s, CLS 0
+- Bundles: JS 33,283 B raw / 11,154 B gzip; CSS 17,193 B raw / 4,525 B gzip;
+  hero 110,538 B; no runtime fonts
 
-- Run a pilot with at least 15 screen-reader users against the brief’s 80% unassisted-completion target.
-- Test the bundled voice and notification cues with a wider range of screen-reader ducking configurations and Bluetooth profiles.
+Full evidence and reproductions are in `.factory/verification.md`. No product
+code was modified during verification.
+
+## Required next steps
+
+1. Add the isolated one-click demo and `.factory/demo.md`.
+2. Inventory every shipped claim in `.factory/claims.json` and add one tagged,
+   demo-driven observable test for each claim.
+3. Fix the first screen and mobile action placement.
+4. Strictly validate imports before writing; quarantine/recover bad stored rows.
+5. Give the visible Import JSON control a visible focus state.
+6. Complete metadata, 404, security headers, caching, and missing audit docs.
+7. Rerun every gate and independent verification before release.
