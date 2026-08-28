@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Headphones around a leaf">
+  <rect width="512" height="512" rx="76" fill="#1f5c42"/>
+  <path d="M112 284v-45c0-93 63-159 144-159s144 66 144 159v45" fill="none" stroke="#f4f0e5" stroke-width="34" stroke-linecap="round"/>
+  <rect x="87" y="255" width="70" height="130" rx="30" fill="#c87852" stroke="#f4f0e5" stroke-width="12"/>
+  <rect x="355" y="255" width="70" height="130" rx="30" fill="#c87852" stroke="#f4f0e5" stroke-width="12"/>
+  <path d="M256 395c-66-42-79-112 0-164 79 52 66 122 0 164Z" fill="#a7c7a9"/>
+  <path d="M256 382V250" stroke="#1f5c42" stroke-width="11" stroke-linecap="round"/>
+</svg>

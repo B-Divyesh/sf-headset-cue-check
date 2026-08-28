@@ -1,0 +1,8 @@
+{
+  "generator": "/opt/fleet/lib/gen-image.sh",
+  "deployment": "factory-image",
+  "date": "2026-08-28",
+  "size": "1536x1024",
+  "quality": "high",
+  "prompt": "Use case: stylized-concept. Asset type: landing page hero illustration for an accessible headset setup utility. A single unbranded over-ear headset laid open like a carefully pressed botanical specimen, with two distinct ginkgo-like leaves near the ear cups suggesting left and right, a slender tuning fork, and a few abstract hand-drawn nonverbal registration marks. Archival field guide aesthetic, pressed leaves, graphite, faded gouache, warm fibrous paper, tactile print grain. Soft window light from upper left, shallow relief shadows, straight-on 50mm editorial composition. Landscape 3:2, main subject on right two-thirds with calm negative space on the upper-left. Palette of oat paper, deep fern ink, sage, oxidized copper, charcoal. Clear coherent headphone geometry and cable. No text, no letters, no numbers, no watermark, no logos, no people, no ears, no faces, no clinical diagrams, no audiograms, no neon gradient, no glossy 3D, no extra headphone parts, no malformed cables."
+}
