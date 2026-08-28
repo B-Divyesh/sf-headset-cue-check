@@ -42,6 +42,7 @@ test('supports 200% text, reduced motion, and narrow screens without overflow', 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   await expect(page.getByRole('link', { name: 'Try it with sample data' })).toBeVisible();
   await page.getByRole('button', { name: 'Start your check' }).click();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   expect(await page.locator('.observation').evaluate(node => Number.parseFloat(getComputedStyle(node).animationDuration))).toBeLessThanOrEqual(0.001);
 });
 

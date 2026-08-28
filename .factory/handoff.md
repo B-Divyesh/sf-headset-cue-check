@@ -38,7 +38,7 @@ All release-blocking findings in verifier report commit `6491504cbac4b93ec464e70
 - Privacy: a complete demo workflow sends same-origin GET requests only; cookies, localStorage, and sessionStorage remain empty.
 - Local `verify-url.sh`: HTTP 200; title/lang/one h1/main/alt/buttons pass; zero console or page errors.
 - Local mobile Lighthouse 12.8.2: Performance 99, Accessibility 100, Best Practices 100, SEO 100; FCP 1.0 s, LCP 2.0 s, TBT 0 ms, CLS 0.
-- Production output: JS 37,744 B raw / 12,400 B gzip; CSS 19,120 B raw / 4,890 B gzip; hero WebP 110,538 B; social image 149,208 B; no runtime fonts.
+- Production output: JS 37,744 B raw / 12,349 B gzip; CSS 19,119 B raw / 4,886 B gzip; hero WebP 110,538 B; social image 149,208 B; no runtime fonts.
 
 ## Run
 
@@ -55,4 +55,17 @@ Every claim command is listed in `.factory/claims.json` and is also covered by t
 
 ## Deployment and known gaps
 
-Deployment and live identity/policy evidence will be appended immediately after the repair commit is uploaded. No local release blocker or known product gap remains.
+- Repair implementation commit: `c7bab47` (pushed to `origin/main` before deployment).
+- Deployment command: `/opt/fleet/lib/deploy-static.sh headset-cue-check dist`.
+- Azure Static Web Apps deployment ID: `b659777e-e45b-4a5a-8814-602357ae8df3`; status `Succeeded` at 10:34 UTC.
+- Live URL: `https://headset-cue-check.sociobot.in` returned HTTP 200 with the new no-cache, CSP, frame-denial, nosniff, referrer, and permissions policies.
+- Live `/manifest.webmanifest`: HTTP 200, `application/manifest+json`, `cache-control: no-cache`.
+- Live hashed JS: HTTP 200, `cache-control: public, max-age=31536000, immutable`.
+- Live `/sw.js`: HTTP 200, `cache-control: no-cache, no-store, must-revalidate`.
+- Live `/missing-listening-path`: HTTP 404 with `dist/404.html` byte identity.
+- `verify-url.sh` on live `/` and `/demo`: HTTP 200; correct titles, `lang=en`, one h1, main landmark, no missing alt, no unlabeled buttons, and zero console/page errors at desktop and 390 px.
+- Live fresh-browser offline demo: cache `hcc-shell-v3`, persistent demo banner, offline speech playback to completion, and zero console/page errors.
+- Live Lighthouse 12.8.2 mobile: Performance 100, Accessibility 100, Best Practices 100, SEO 100; FCP 0.9 s, LCP 1.7 s, TBT 0 ms, CLS 0.
+- SHA-256 matched local `dist/` for root HTML, demo HTML, 404 HTML, manifest, service worker, hashed JS/CSS, hero WebP, social JPG, speech WAV, app icon, robots, and sitemap.
+
+No known release blocker or product gap remains. Backend, auth, billing, package-consumer, API rate-limit, and health-endpoint checks do not apply to this static local-first PWA.
