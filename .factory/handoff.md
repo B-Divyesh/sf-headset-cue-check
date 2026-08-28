@@ -1,62 +1,58 @@
-# Headset Cue Check — independent verification handoff
+# Headset Cue Check — repair handoff
 
-## Verdict: FAIL
+## Outcome
 
-- Tested candidate: `6dec30f4526b380f4b56b2fb20c73d8e9277b255`
-- Tested URL: `https://headset-cue-check.sociobot.in`
-- Verification date: 28 August 2026 UTC
+All release-blocking findings in verifier report commit `6491504cbac4b93ec464e70b775ff7137dff6fdc` for candidate `6dec30f4526b380f4b56b2fb20c73d8e9277b255` are repaired. The artifact remains a static offline PWA built to `dist/`.
 
-The live deployment matches the candidate byte-for-byte for the checked build
-artifacts, and the core six-step workflow, local persistence, export/import,
-offline reload, accessibility scans, mobile layout, and production build mostly
-work. It is not releasable under the supplied contract.
+## Repairs
 
-Release blockers:
+- Added the mandatory claim inventory at `.factory/claims.json`: nine unique public claims, each mapped to exactly one `@claim:<id>` Playwright test using `/demo` and shipped sample data.
+- Added `/demo`, `/?demo=1` support, a realistic completed accessibility-lab card, the persistent required banner, Reset demo, and Start for real. Demo records use IndexedDB `headset-cue-check-demo`; real records use `headset-cue-check`.
+- Reworked the cold first screen to identify screen-reader users and accessibility staff, use an eight-word job headline, show a one-click sample action plus real action, and list free/privacy/offline facts. At 390×844 the sample action begins around y=372 and is fully visible.
+- Replaced shallow import checks with runtime validation of every session, rating, date, enum, length, range, and completion dependency. Existing invalid IndexedDB rows are removed during reads with a visible recovery message. Date rendering also has a defensive fallback.
+- Rebuilt Import JSON as a full-size transparent file input inside its visible label. Keyboard focus produces the designed 3 px rust outline on the 44 px label.
+- Added route-specific canonical, Open Graph, Twitter, apple-touch, title, and description metadata; a 1200×630 social image; `robots.txt`; `sitemap.xml`; `/demo`; and a designed `404.html` plus host-side 404 override.
+- Added `staticwebapp.config.json` with CSP, frame denial, nosniff, referrer and permissions policies, the manifest MIME type, immutable asset/audio/icon caching, and no-cache HTML/manifest/service-worker handling.
+- Removed the inline progress style so the CSP needs no unsafe style source. The offline fallback now uses a self-hosted stylesheet.
+- Raised the legal return link to a 44 px target. Mobile navigation now remains within 390 px at simulated 200% text.
+- Added `.factory/demo.md`, `.factory/copy-audit.md`, an updated README, ESLint/typecheck scripts, release-contract tests, and recorded social-art provenance in `.factory/design.md`.
 
-- `.factory/claims.json` is missing, no `@claim:` tests exist, and shipped
-  claims are not inventoried.
-- No one-click sample-data demo or isolated demo storage exists; `/demo` and
-  `/?demo=1` are ordinary empty product views and `.factory/demo.md` is absent.
-- The first screen does not identify screen-reader users/accessibility staff.
-  On 390×844 mobile, the real start button is below the first viewport.
+## Regression coverage
 
-High-severity defects:
+- `tests/model.test.ts`: exact invalid completion-date shape, invalid answer values, invalid setting ranges, and a valid complete sample.
+- `tests/release.test.ts`: one test tag per claim; route metadata; 404; CSP/frame/MIME/cache policy; no inline page styles; manifest and service-worker versioning.
+- `tests/e2e/app.spec.ts`: full six-observation flow; offline reload/audio/update check; demo isolation/reset/exit; whole-flow same-origin privacy; JSON export/import; copy/print; remove/undo; keyboard/focus/touch targets; 200% text; reduced motion; desktop/mobile axe; designed 404; rejected corrupt import; and cleanup of a corrupt row already in IndexedDB.
 
-- A weakly validated import with an invalid completion date is persisted,
-  throws `Invalid time value`, and blanks the app on every reload until browser
-  site data is cleared.
-- Keyboard focus on Import JSON lands on a clipped 1 px file input while the
-  visible label has no focus indicator.
+## Local verification — 28 August 2026 UTC
 
-Additional issues include missing CSP/frame protection, non-immutable 30-second
-asset caching, missing canonical/social/apple metadata, robots/sitemap and a
-real 404, a 19 px-high legal return link, and missing demo/copy-audit docs.
+- `npm ci`: pass; 181 packages installed; 0 vulnerabilities.
+- `npm test`: pass; 8/8 unit and release-contract tests.
+- `npm run typecheck`: pass.
+- `npm run lint`: pass.
+- `npm run build`: pass; `dist/index.html` present.
+- `npm run test:e2e`: pass; 26/26 across desktop Chromium and 390×844 Chromium.
+- Playwright axe: zero serious/critical findings on tested light/dark home, legal, setup, and saved-card states.
+- Keyboard: full first steps operate with Enter/Space; route h1 focus is restored; Import JSON has a visible 3 px outline; no trap.
+- Responsive: no horizontal overflow at 390 px, including simulated 200% root text; first sample action is above the fold; reduced-motion animation duration is ≤0.001 s.
+- Offline/update: `/demo` reloads offline, bundled WAV completes offline, cache `hcc-shell-v3` exists, and `registration.update()` completes after reconnecting.
+- Privacy: a complete demo workflow sends same-origin GET requests only; cookies, localStorage, and sessionStorage remain empty.
+- Local `verify-url.sh`: HTTP 200; title/lang/one h1/main/alt/buttons pass; zero console or page errors.
+- Local mobile Lighthouse 12.8.2: Performance 99, Accessibility 100, Best Practices 100, SEO 100; FCP 1.0 s, LCP 2.0 s, TBT 0 ms, CLS 0.
+- Production output: JS 37,744 B raw / 12,400 B gzip; CSS 19,120 B raw / 4,890 B gzip; hero WebP 110,538 B; social image 149,208 B; no runtime fonts.
 
-Verification results:
+## Run
 
-- `npm ci`: pass, 0 vulnerabilities
-- `npm test`: pass, 4/4
-- `npm run build`: pass, TypeScript plus Vite
-- `npm run test:e2e`: pass, 8/8 desktop and 390 px mobile
-- Live normal-flow axe: 0 serious/critical after state transitions settle
-- Live offline root, unvisited privacy route, and cached audio: pass
-- Live outbound traffic: same-origin GET only; no cookies or web-storage data
-- Live/candidate SHA-256 checks: all checked artifacts match
-- Mobile Lighthouse: 93 Performance, 100 Accessibility, 100 Best Practices,
-  100 SEO; LCP 1.7 s, CLS 0
-- Bundles: JS 33,283 B raw / 11,154 B gzip; CSS 17,193 B raw / 4,525 B gzip;
-  hero 110,538 B; no runtime fonts
+```sh
+npm ci
+npm test
+npm run typecheck
+npm run lint
+npm run build
+npm run test:e2e
+```
 
-Full evidence and reproductions are in `.factory/verification.md`. No product
-code was modified during verification.
+Every claim command is listed in `.factory/claims.json` and is also covered by the complete browser run.
 
-## Required next steps
+## Deployment and known gaps
 
-1. Add the isolated one-click demo and `.factory/demo.md`.
-2. Inventory every shipped claim in `.factory/claims.json` and add one tagged,
-   demo-driven observable test for each claim.
-3. Fix the first screen and mobile action placement.
-4. Strictly validate imports before writing; quarantine/recover bad stored rows.
-5. Give the visible Import JSON control a visible focus state.
-6. Complete metadata, 404, security headers, caching, and missing audit docs.
-7. Rerun every gate and independent verification before release.
+Deployment and live identity/policy evidence will be appended immediately after the repair commit is uploaded. No local release blocker or known product gap remains.

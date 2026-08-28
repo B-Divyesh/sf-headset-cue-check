@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://headset-cue-check.sociobot.in/sitemap.xml

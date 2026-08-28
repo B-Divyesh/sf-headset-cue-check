@@ -1,10 +1,10 @@
 import './style.css';
 import { CuePlayer, type CueId, type NotificationStyle } from './audio';
 import {
-  DEFAULT_SETTINGS, STEPS, createSession, isValidImport, recommendationFor, upsertAnswer,
+  DEFAULT_SETTINGS, STEPS, createSession, demoSession, isValidImport, recommendationFor, upsertAnswer,
   type CheckSession, type SetupSettings
 } from './model';
-import { allSessions, mergeSessions, removeSession, saveSession } from './storage';
+import { allSessions, clearSessions, mergeSessions, removeSession, saveSession, useDemoStorage } from './storage';
 
 type View = 'home' | 'check' | 'setup' | 'card';
 
@@ -18,14 +18,19 @@ let session: CheckSession | undefined;
 let view: View = 'home';
 let storageError = '';
 let recentlyRemoved: CheckSession | undefined;
+const demoMode = location.pathname.replace(/\/$/, '') === '/demo' || new URLSearchParams(location.search).get('demo') === '1';
+const BUILD_ID = '1.0.1-repair.1';
 
 const escapeHtml = (value: string | number) => String(value).replace(/[&<>'"]/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
 }[character] ?? character));
 
-const formatDate = (stamp: string) => new Intl.DateTimeFormat(undefined, {
-  dateStyle: 'medium', timeStyle: 'short'
-}).format(new Date(stamp));
+const formatDate = (stamp: string) => {
+  const date = new Date(stamp);
+  return Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium', timeStyle: 'short'
+  }).format(date) : 'Date unavailable';
+};
 
 const optionLabel = (stepId: string, value: string) => STEPS.find(step => step.id === stepId)
   ?.options.find(option => option.value === value)?.label ?? value;
@@ -38,17 +43,19 @@ function shell(content: string): string {
         <span>Headset Cue Check</span>
       </a>
       <nav aria-label="Utility">
+        <a href="/demo">Demo</a>
         <a href="/privacy" data-route>Privacy</a>
         <a href="/terms" data-route>Terms</a>
       </nav>
     </header>
     <div id="connection" class="connection ${navigator.onLine ? 'is-hidden' : ''}" role="status">Offline — the guide and your saved cards still work.</div>
+    ${demoMode ? `<aside class="demo-banner" aria-label="Demo mode"><strong>Demo — sample data, nothing is saved</strong><span>Changes stay separate from your setup cards.</span><div><button class="text-button" id="reset-demo">Reset demo</button><a href="/" class="text-link">Start for real</a></div></aside>` : ''}
     ${recentlyRemoved ? `<div class="undo-bar" role="status">Check removed. <button class="text-button" id="undo-remove">Undo</button></div>` : ''}
     ${content}
     <footer>
-      <p><span aria-hidden="true">❧</span> Private by design. Your observations stay in this browser.</p>
-      <p>Original AI-assisted field-guide illustration; no headset brands or endorsements.</p>
-      <nav aria-label="Footer"><a href="/privacy" data-route>Privacy</a><a href="/terms" data-route>Terms</a></nav>
+      <p><span aria-hidden="true">❧</span> Headset listening checks for screen-reader users and accessibility staff.</p>
+      <p>Built by Param Factory · ${BUILD_ID}<br />Original AI-assisted field-guide illustration.</p>
+      <nav aria-label="Footer"><a href="/demo">Demo</a><a href="/privacy" data-route>Privacy</a><a href="/terms" data-route>Terms</a></nav>
     </footer>
     <div id="live-status" class="sr-only" aria-live="polite" aria-atomic="true"></div>
     <div id="update-toast" class="toast is-hidden" role="status"><span>A fresh field guide is ready.</span><button id="reload-app">Reload</button></div>`;
@@ -61,13 +68,13 @@ function homePage(): string {
     <section class="hero" aria-labelledby="page-title">
       <div class="hero-copy">
         <p class="eyebrow">A six-observation listening guide</p>
-        <h1 id="page-title" tabindex="-1">Learn how your headset handles the cues you rely on.</h1>
-        <p class="lede">Check speech, left and right, mono, working level, and interruptions—then keep an exact setup card on this device.</p>
-        <div class="notice" role="note"><strong>This is not a hearing or audiology test.</strong> It does not diagnose, certify hardware, or change system settings. A browser can play to your current output, but cannot confirm which physical headset is selected.</div>
+        <h1 id="page-title" tabindex="-1">Check the headset cues your work depends on.</h1>
+        <p class="lede">For screen-reader users and accessibility staff who need repeatable speech, channel, level, and alert settings.</p>
         <div class="hero-actions">
-          ${active ? `<button class="primary" id="resume-check">Resume observation ${Math.min(active.currentStep + 1, 6)} of 6</button><button class="secondary" id="start-check">Start a new check</button>` : `<button class="primary" id="start-check">Start the six checks</button>`}
-          <span class="duration">About 4 minutes · works offline after first visit</span>
+          ${demoMode ? `<button class="secondary" id="start-check">Start a sample check</button>` : `<a class="primary" href="/demo">Try it with sample data</a>${active ? `<button class="secondary" id="resume-check">Resume observation ${Math.min(active.currentStep + 1, 6)} of 6</button>` : `<button class="secondary" id="start-check">Start your check</button>`}`}
         </div>
+        <ul class="hero-facts" aria-label="Product facts"><li>Free to use.</li><li>Your notes and cards stay in this browser.</li><li>Works offline after your first visit.</li></ul>
+        <div class="notice" role="note"><strong>This is not a hearing or audiology test.</strong> It does not diagnose, certify hardware, or change system settings. Your browser plays to the output selected in your operating system.</div>
       </div>
       <figure class="specimen-figure">
         <img src="/assets/headset-specimen.webp" width="1200" height="800" fetchpriority="high" decoding="async" alt="Over-ear headphones arranged on specimen paper beside two leaves and a tuning fork." />
@@ -75,16 +82,16 @@ function homePage(): string {
       </figure>
     </section>
     <section class="preflight" aria-labelledby="before-title">
-      <div><p class="section-number" aria-hidden="true">FIELD NOTE / BEFORE YOU BEGIN</p><h2 id="before-title">Prepare your listening route</h2></div>
+      <div><p class="section-number" aria-hidden="true">FIELD NOTE / HOW IT WORKS</p><h2 id="before-title">Complete the check in three steps</h2></div>
       <ol class="preflight-list">
-        <li><span>1</span><div><strong>Connect the headset</strong><p>Select it in your operating system before starting.</p></div></li>
-        <li><span>2</span><div><strong>Begin at a low level</strong><p>Raise volume gradually; stop if anything feels uncomfortable.</p></div></li>
-        <li><span>3</span><div><strong>Pause your screen reader if useful</strong><p>Every cue also has a visible label and replay control.</p></div></li>
+        <li><span>1</span><div><strong>Select the headset</strong><p>Choose it in your operating system. Begin at a low volume.</p></div></li>
+        <li><span>2</span><div><strong>Play and rate six cues</strong><p>Record what you notice about speech, channels, levels, and alerts.</p></div></li>
+        <li><span>3</span><div><strong>Save the settings</strong><p>Keep a local setup card you can repeat later.</p></div></li>
       </ol>
     </section>
     <section class="library" aria-labelledby="library-title">
       <div class="library-heading"><div><p class="section-number">YOUR LOCAL SPECIMENS</p><h2 id="library-title">Saved setup cards</h2></div>
-        <div class="library-actions"><button class="secondary small" id="export-all" ${completed.length ? '' : 'disabled'}>Export JSON</button><label class="secondary small file-label" for="import-file">Import JSON</label><input id="import-file" class="sr-only" type="file" accept="application/json,.json" /></div>
+        <div class="library-actions"><button class="secondary small" id="export-all" ${completed.length ? '' : 'disabled'}>Export JSON</button><label class="secondary small file-label"><span>Import JSON</span><input id="import-file" class="file-input" type="file" accept="application/json,.json" /></label></div>
       </div>
       ${storageError ? `<p class="error" role="alert">${escapeHtml(storageError)} Your check can continue, but it may not survive closing this tab.</p>` : ''}
       ${completed.length ? `<ul class="saved-list">${completed.map(item => `<li><div><strong>${escapeHtml(item.settings?.deviceName || 'Unnamed headset')}</strong><span>${escapeHtml(item.settings?.platform || 'Platform not recorded')} · ${formatDate(item.completedAt!)}</span></div><div><button class="text-button open-card" data-id="${item.id}">Open card</button><button class="text-button danger-button remove-card" data-id="${item.id}" aria-label="Remove setup card for ${escapeHtml(item.settings?.deviceName || 'unnamed headset')}">Remove</button></div></li>`).join('')}</ul>` : `<div class="empty-state"><span aria-hidden="true">⌁</span><p><strong>No setup cards yet.</strong><br />Finish one check and its settings will appear here.</p></div>`}
@@ -93,7 +100,7 @@ function homePage(): string {
 }
 
 function progressMarkup(index: number): string {
-  return `<div class="progress-wrap"><div class="progress-copy"><span>Observation ${index + 1} of ${STEPS.length}</span><span>${Math.round(((index + 1) / STEPS.length) * 100)}%</span></div><div class="progress" role="progressbar" aria-label="Check progress" aria-valuemin="1" aria-valuemax="6" aria-valuenow="${index + 1}"><span style="width:${((index + 1) / STEPS.length) * 100}%"></span></div></div>`;
+  return `<div class="progress-wrap"><div class="progress-copy"><span>Observation ${index + 1} of ${STEPS.length}</span><span>${Math.round(((index + 1) / STEPS.length) * 100)}%</span></div><div class="progress progress-step-${index + 1}" role="progressbar" aria-label="Check progress" aria-valuemin="1" aria-valuemax="6" aria-valuenow="${index + 1}"><span></span></div></div>`;
 }
 
 function checkPage(): string {
@@ -181,13 +188,19 @@ function legalPage(kind: 'privacy' | 'terms'): string {
   const privacy = kind === 'privacy';
   return shell(`<main id="main" class="legal-page"><p class="eyebrow">${privacy ? 'Privacy note' : 'Terms of use'}</p><h1 tabindex="-1">${privacy ? 'Your listening notes stay yours.' : 'A practical guide, not a diagnosis.'}</h1><p class="updated">Effective 28 August 2026</p>
     ${privacy ? `<section><h2>What is stored</h2><p>Headset Cue Check stores your cue ratings, optional notes, setup values, and completion dates in IndexedDB in this browser. Nothing is sent to Sociobot or another server. The app includes no analytics, advertising, tracking pixels, accounts, or third-party runtime scripts.</p></section><section><h2>Your controls</h2><p>You can export your cards as JSON, import them on another device, or remove them from the home screen. Clearing this site’s browser data also removes every saved card. An exported file is outside the app’s control, so keep it where you are comfortable.</p></section><section><h2>Network and audio</h2><p>The first visit downloads the app shell, illustration, and speech samples. A service worker then keeps those resources for offline use. Audio is generated or played locally. The browser may expose ordinary request metadata, such as an IP address, to the hosting provider when files are downloaded; the product does not retain a user profile.</p></section>` : `<section><h2>Purpose and limits</h2><p>This free utility helps you observe how a headset handles speech, channels, levels, and alerts in your own workflow. It is not a medical or audiology test, hearing protection advice, hardware certification, or a substitute for a qualified professional.</p></section><section><h2>Use safely</h2><p>Begin at low volume and stop if sound feels uncomfortable. You remain responsible for selecting the intended audio output and confirming operating-system settings. Browsers cannot reliably identify the physical device receiving audio.</p></section><section><h2>No warranty</h2><p>The software is provided “as is,” without warranty of any kind, as described in the MIT License. Results are personal observations, not pass/fail findings. Do not rely on this utility alone for safety-critical or regulated work.</p></section>`}
-    <p><a href="/" data-route>Return to Headset Cue Check</a></p></main>`);
+    <p><a class="legal-return" href="/" data-route>Return to Headset Cue Check</a></p></main>`);
+}
+
+function notFoundPage(): string {
+  return shell(`<main id="main" class="legal-page not-found"><p class="eyebrow">Field note / 404</p><h1 tabindex="-1">This listening path is not in the guide.</h1><p>The address may have changed. Return home to start a headset check or open the sample.</p><p><a class="legal-return" href="/" data-route>Return to Headset Cue Check</a></p></main>`);
 }
 
 function render(options: { focus?: boolean } = {}): void {
-  const path = location.pathname;
-  document.title = path.startsWith('/privacy') ? 'Privacy — Headset Cue Check' : path.startsWith('/terms') ? 'Terms — Headset Cue Check' : 'Headset Cue Check — accessible listening setup';
+  const path = location.pathname.replace(/\/$/, '') || '/';
+  const knownHome = path === '/' || path === '/demo';
+  document.title = path === '/privacy' ? 'Privacy — Headset Cue Check' : path === '/terms' ? 'Terms — Headset Cue Check' : path === '/demo' ? 'Demo — Headset Cue Check' : knownHome ? 'Headset Cue Check — check speech and alert cues' : 'Page not found — Headset Cue Check';
   if (path === '/privacy' || path === '/terms') app.innerHTML = legalPage(path.slice(1) as 'privacy' | 'terms');
+  else if (!knownHome) app.innerHTML = notFoundPage();
   else app.innerHTML = view === 'check' ? checkPage() : view === 'setup' ? setupPage() : view === 'card' ? cardPage() : homePage();
   bindEvents();
   if (options.focus) requestAnimationFrame(() => document.querySelector<HTMLElement>('main h1')?.focus());
@@ -195,8 +208,14 @@ function render(options: { focus?: boolean } = {}): void {
 
 async function persist(): Promise<void> {
   if (!session) return;
-  try { await saveSession(session); sessions = await allSessions(); }
+  try { await saveSession(session); await refreshSessions(); }
   catch (error) { storageError = error instanceof Error ? error.message : 'Local saving is unavailable.'; }
+}
+
+async function refreshSessions(): Promise<void> {
+  const loaded = await allSessions();
+  sessions = loaded.sessions;
+  if (loaded.discarded) storageError = `${loaded.discarded} damaged saved ${loaded.discarded === 1 ? 'check was' : 'checks were'} removed. Your other cards are safe.`;
 }
 
 function announce(message: string): void {
@@ -288,16 +307,17 @@ function bindEvents(): void {
   document.querySelectorAll<HTMLButtonElement>('.remove-card').forEach(button => button.addEventListener('click', async () => {
     const found = sessions.find(item => item.id === button.dataset.id); if (!found) return;
     if (!confirm(`Remove the setup card for ${found.settings?.deviceName || 'this headset'} from this browser?`)) return;
-    recentlyRemoved = found; await removeSession(found.id); sessions = await allSessions(); render();
+    recentlyRemoved = found; await removeSession(found.id); await refreshSessions(); render();
   }));
-  document.querySelector('#undo-remove')?.addEventListener('click', async () => { if (recentlyRemoved) { await saveSession(recentlyRemoved); sessions = await allSessions(); recentlyRemoved = undefined; render(); announce('Setup card restored.'); } });
+  document.querySelector('#undo-remove')?.addEventListener('click', async () => { if (recentlyRemoved) { await saveSession(recentlyRemoved); await refreshSessions(); recentlyRemoved = undefined; render(); announce('Setup card restored.'); } });
   document.querySelector('#export-all')?.addEventListener('click', () => download('headset-cue-check-cards.json', { format: 'headset-cue-check', version: 1, exportedAt: new Date().toISOString(), sessions: sessions.filter(item => item.completedAt) }));
   document.querySelector<HTMLInputElement>('#import-file')?.addEventListener('change', async event => {
     const file = (event.currentTarget as HTMLInputElement).files?.[0]; if (!file) return;
     try {
-      const parsed = JSON.parse(await file.text()) as { sessions?: unknown };
-      if (!isValidImport(parsed.sessions)) throw new Error('This is not a valid Headset Cue Check export.');
-      const count = await mergeSessions(parsed.sessions); sessions = await allSessions(); render(); announce(`${count} setup ${count === 1 ? 'card' : 'cards'} imported.`);
+      const parsed = JSON.parse(await file.text()) as { format?: unknown; version?: unknown; sessions?: unknown };
+      if (parsed.format !== 'headset-cue-check' || parsed.version !== 1 || !isValidImport(parsed.sessions)) throw new Error('This file is not a valid Headset Cue Check export. Choose a JSON file exported by this app.');
+      storageError = '';
+      const count = await mergeSessions(parsed.sessions); await refreshSessions(); render(); announce(`${count} setup ${count === 1 ? 'card' : 'cards'} imported.`);
     } catch (error) { storageError = error instanceof Error ? error.message : 'The selected file could not be imported.'; render(); }
   });
   document.querySelector('#copy-card')?.addEventListener('click', async () => { if (!session) return; try { await navigator.clipboard.writeText(cardSummary(session)); announce('Setup card copied.'); } catch { announce('Copy was blocked. Use Print card instead.'); } });
@@ -305,6 +325,17 @@ function bindEvents(): void {
   document.querySelector('#export-card')?.addEventListener('click', () => { if (session) download(`headset-cue-check-${session.settings?.deviceName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'card'}.json`, { format: 'headset-cue-check', version: 1, exportedAt: new Date().toISOString(), sessions: [session] }); });
   document.querySelector('#home-button')?.addEventListener('click', () => { session = undefined; view = 'home'; history.pushState({}, '', '/'); render({ focus: true }); });
   document.querySelector('#reload-app')?.addEventListener('click', () => location.reload());
+  document.querySelector('#reset-demo')?.addEventListener('click', async () => {
+    await clearSessions();
+    await saveSession(demoSession());
+    session = undefined;
+    view = 'home';
+    storageError = '';
+    recentlyRemoved = undefined;
+    await refreshSessions();
+    render({ focus: true });
+    announce('Demo reset to the original sample card.');
+  });
 }
 
 window.addEventListener('popstate', () => { view = 'home'; render({ focus: true }); });
@@ -333,7 +364,11 @@ async function registerServiceWorker(): Promise<void> {
 }
 
 async function init(): Promise<void> {
-  try { sessions = await allSessions(); } catch (error) { storageError = error instanceof Error ? error.message : 'Local storage is unavailable.'; }
+  useDemoStorage(demoMode);
+  try {
+    await refreshSessions();
+    if (demoMode && sessions.length === 0) { await saveSession(demoSession()); await refreshSessions(); }
+  } catch (error) { storageError = error instanceof Error ? error.message : 'Local storage is unavailable.'; }
   const startNow = new URLSearchParams(location.search).get('start') === '1';
   if (startNow && location.pathname === '/') { session = createSession(); view = 'check'; await persist(); }
   render();

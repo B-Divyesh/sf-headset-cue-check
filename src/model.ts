@@ -112,6 +112,50 @@ export const DEFAULT_SETTINGS: SetupSettings = {
   notificationStyle: 'Balanced', notes: ''
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const isDate = (value: unknown): value is string =>
+  typeof value === 'string' && value.length <= 40 && Number.isFinite(Date.parse(value));
+
+const isText = (value: unknown, maximum: number): value is string =>
+  typeof value === 'string' && value.length <= maximum;
+
+const isOneOf = <T extends string>(value: unknown, choices: readonly T[]): value is T =>
+  typeof value === 'string' && choices.includes(value as T);
+
+function isValidRating(value: unknown): value is Rating {
+  if (!isRecord(value)) return false;
+  const step = STEPS.find(item => item.id === value.stepId);
+  return Boolean(step) && isOneOf(value.value, step!.options.map(option => option.value)) &&
+    isText(value.note, 240) && isDate(value.assessedAt);
+}
+
+function isValidSettings(value: unknown): value is SetupSettings {
+  if (!isRecord(value)) return false;
+  return isText(value.platform, 40) && isText(value.deviceName, 80) && value.deviceName.trim().length > 0 &&
+    typeof value.systemVolume === 'number' && Number.isInteger(value.systemVolume) && value.systemVolume >= 0 && value.systemVolume <= 100 &&
+    typeof value.screenReaderVolume === 'number' && Number.isInteger(value.screenReaderVolume) && value.screenReaderVolume >= 0 && value.screenReaderVolume <= 100 &&
+    isOneOf(value.monoAudio, ['Off', 'On', 'Revisit']) &&
+    isOneOf(value.spatialAudio, ['Off', 'On', 'Revisit']) &&
+    isOneOf(value.audioDucking, ['Off', 'On', 'Revisit']) &&
+    isOneOf(value.notificationStyle, ['Gentle', 'Balanced', 'Distinct']) &&
+    isText(value.notes, 400);
+}
+
+export function isValidSession(value: unknown): value is CheckSession {
+  if (!isRecord(value)) return false;
+  if (typeof value.id !== 'string' || !/^[a-zA-Z0-9-]{1,80}$/.test(value.id)) return false;
+  if (!isDate(value.createdAt) || !isDate(value.updatedAt)) return false;
+  if (!Number.isInteger(value.currentStep) || (value.currentStep as number) < 0 || (value.currentStep as number) >= STEPS.length) return false;
+  if (!Array.isArray(value.answers) || value.answers.length > STEPS.length || !value.answers.every(isValidRating)) return false;
+  const stepIds = value.answers.map(answer => answer.stepId);
+  if (new Set(stepIds).size !== stepIds.length) return false;
+  if (value.settings !== undefined && !isValidSettings(value.settings)) return false;
+  if (value.completedAt !== undefined && (!isDate(value.completedAt) || !isValidSettings(value.settings))) return false;
+  return true;
+}
+
 export function createSession(now = new Date()): CheckSession {
   const stamp = now.toISOString();
   return { id: crypto.randomUUID(), createdAt: stamp, updatedAt: stamp, currentStep: 0, answers: [] };
@@ -137,10 +181,34 @@ export function recommendationFor(session: CheckSession): string[] {
 }
 
 export function isValidImport(value: unknown): value is CheckSession[] {
-  return Array.isArray(value) && value.every(item => {
-    if (!item || typeof item !== 'object') return false;
-    const row = item as Partial<CheckSession>;
-    return typeof row.id === 'string' && typeof row.createdAt === 'string' &&
-      typeof row.updatedAt === 'string' && Array.isArray(row.answers);
-  });
+  return Array.isArray(value) && value.length <= 500 && value.every(isValidSession);
+}
+
+export function demoSession(): CheckSession {
+  return {
+    id: 'demo-accessibility-lab-headset',
+    createdAt: '2026-08-28T09:20:00.000Z',
+    updatedAt: '2026-08-28T09:31:00.000Z',
+    completedAt: '2026-08-28T09:31:00.000Z',
+    currentStep: 5,
+    answers: [
+      { stepId: 'speech', value: 'clear', note: 'Clear at the normal working level.', assessedAt: '2026-08-28T09:21:00.000Z' },
+      { stepId: 'channels', value: 'matched', note: '', assessedAt: '2026-08-28T09:22:00.000Z' },
+      { stepId: 'mono', value: 'all', note: 'All tones stayed present with Mono audio on.', assessedAt: '2026-08-28T09:24:00.000Z' },
+      { stepId: 'level', value: 'comfortable', note: '', assessedAt: '2026-08-28T09:26:00.000Z' },
+      { stepId: 'interruption', value: 'masked', note: 'The alert covered the last word.', assessedAt: '2026-08-28T09:28:00.000Z' },
+      { stepId: 'notification', value: 'distinct', note: 'Distinct remained noticeable during speech.', assessedAt: '2026-08-28T09:29:00.000Z' }
+    ],
+    settings: {
+      platform: 'Windows',
+      deviceName: 'Accessibility lab headset',
+      systemVolume: 38,
+      screenReaderVolume: 62,
+      monoAudio: 'On',
+      spatialAudio: 'Off',
+      audioDucking: 'Revisit',
+      notificationStyle: 'Distinct',
+      notes: 'Use the rear USB port. Recheck audio ducking before moderated sessions.'
+    }
+  };
 }

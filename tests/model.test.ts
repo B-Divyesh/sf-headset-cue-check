@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createSession, isValidImport, recommendationFor, upsertAnswer, type CheckSession } from '../src/model';
+import { createSession, demoSession, isValidImport, isValidSession, recommendationFor, upsertAnswer } from '../src/model';
 
 describe('session model', () => {
   it('creates a private session with no ratings', () => {
@@ -31,9 +31,20 @@ describe('session model', () => {
     ]);
   });
 
-  it('rejects malformed import data', () => {
+  it('strictly validates every imported field and date', () => {
+    const valid = demoSession();
     expect(isValidImport([{ id: 'x' }])).toBe(false);
     expect(isValidImport(null)).toBe(false);
-    expect(isValidImport([{ id: 'x', createdAt: 'a', updatedAt: 'b', answers: [] } satisfies Partial<CheckSession>])).toBe(true);
+    expect(isValidImport([valid])).toBe(true);
+    expect(isValidSession({
+      id: 'corrupt-row',
+      createdAt: valid.createdAt,
+      updatedAt: valid.updatedAt,
+      currentStep: 0,
+      answers: [],
+      completedAt: 'not-a-date'
+    })).toBe(false);
+    expect(isValidImport([{ ...valid, answers: [{ ...valid.answers[0], value: 'unknown' }] }])).toBe(false);
+    expect(isValidImport([{ ...valid, settings: { ...valid.settings, systemVolume: 101 } }])).toBe(false);
   });
 });

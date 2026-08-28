@@ -1,0 +1,6 @@
+:root { color-scheme: light; background: #f4f0e5; color: #17251c; font: 18px/1.6 system-ui, sans-serif; }
+body { margin: 0; }
+main { max-width: 42rem; margin: 12vh auto; padding: 2rem; }
+h1 { font: 700 2.4rem Georgia, serif; }
+a { display: inline-flex; min-height: 44px; align-items: center; color: #1f5c42; font-weight: 700; }
+a:focus-visible { outline: 3px solid #9a3f25; outline-offset: 4px; }

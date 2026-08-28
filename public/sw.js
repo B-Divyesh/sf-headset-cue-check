@@ -1,7 +1,7 @@
-const VERSION = 'hcc-shell-v2';
-const ASSET_CACHE = 'hcc-assets-v2';
+const VERSION = 'hcc-shell-v3';
+const ASSET_CACHE = 'hcc-assets-v3';
 const CORE = [
-  '/manifest.webmanifest', '/offline.html', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png',
+  '/manifest.webmanifest', '/offline.html', '/offline.css', '/404.html', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png',
   '/assets/headset-specimen.webp', '/audio/field-sentence.wav', '/audio/left-channel.wav',
   '/audio/right-channel.wav', '/audio/interruption-sentence.wav'
 ];
