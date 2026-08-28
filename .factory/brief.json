@@ -1,0 +1,9 @@
+{
+  "slug": "headset-cue-check",
+  "title": "Headset Cue Check",
+  "artifact_class": "pwa-offline",
+  "user": "Screen-reader users and accessibility staff evaluating a headset for speech, stereo, mono, level, and notification workflows.",
+  "smallest_useful_product": "An offline accessible web test that runs labelled speech, stereo/mono, level, and interruption scenarios; records only user ratings and produces a local setup card with the exact OS settings to revisit.",
+  "constraints": "Fully keyboard and screen-reader operable; ratings stay local; not an audiology test; browser audio routing is limited.",
+  "monetization": "free"
+}
