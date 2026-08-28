@@ -61,7 +61,7 @@ function homePage(): string {
     <section class="hero" aria-labelledby="page-title">
       <div class="hero-copy">
         <p class="eyebrow">A six-observation listening guide</p>
-        <h1 id="page-title">Learn how your headset handles the cues you rely on.</h1>
+        <h1 id="page-title" tabindex="-1">Learn how your headset handles the cues you rely on.</h1>
         <p class="lede">Check speech, left and right, mono, working level, and interruptions—then keep an exact setup card on this device.</p>
         <div class="notice" role="note"><strong>This is not a hearing or audiology test.</strong> It does not diagnose, certify hardware, or change system settings. A browser can play to your current output, but cannot confirm which physical headset is selected.</div>
         <div class="hero-actions">
@@ -179,13 +179,14 @@ function cardPage(): string {
 
 function legalPage(kind: 'privacy' | 'terms'): string {
   const privacy = kind === 'privacy';
-  return shell(`<main id="main" class="legal-page"><p class="eyebrow">${privacy ? 'Privacy note' : 'Terms of use'}</p><h1>${privacy ? 'Your listening notes stay yours.' : 'A practical guide, not a diagnosis.'}</h1><p class="updated">Effective 28 August 2026</p>
+  return shell(`<main id="main" class="legal-page"><p class="eyebrow">${privacy ? 'Privacy note' : 'Terms of use'}</p><h1 tabindex="-1">${privacy ? 'Your listening notes stay yours.' : 'A practical guide, not a diagnosis.'}</h1><p class="updated">Effective 28 August 2026</p>
     ${privacy ? `<section><h2>What is stored</h2><p>Headset Cue Check stores your cue ratings, optional notes, setup values, and completion dates in IndexedDB in this browser. Nothing is sent to Sociobot or another server. The app includes no analytics, advertising, tracking pixels, accounts, or third-party runtime scripts.</p></section><section><h2>Your controls</h2><p>You can export your cards as JSON, import them on another device, or remove them from the home screen. Clearing this site’s browser data also removes every saved card. An exported file is outside the app’s control, so keep it where you are comfortable.</p></section><section><h2>Network and audio</h2><p>The first visit downloads the app shell, illustration, and speech samples. A service worker then keeps those resources for offline use. Audio is generated or played locally. The browser may expose ordinary request metadata, such as an IP address, to the hosting provider when files are downloaded; the product does not retain a user profile.</p></section>` : `<section><h2>Purpose and limits</h2><p>This free utility helps you observe how a headset handles speech, channels, levels, and alerts in your own workflow. It is not a medical or audiology test, hearing protection advice, hardware certification, or a substitute for a qualified professional.</p></section><section><h2>Use safely</h2><p>Begin at low volume and stop if sound feels uncomfortable. You remain responsible for selecting the intended audio output and confirming operating-system settings. Browsers cannot reliably identify the physical device receiving audio.</p></section><section><h2>No warranty</h2><p>The software is provided “as is,” without warranty of any kind, as described in the MIT License. Results are personal observations, not pass/fail findings. Do not rely on this utility alone for safety-critical or regulated work.</p></section>`}
     <p><a href="/" data-route>Return to Headset Cue Check</a></p></main>`);
 }
 
 function render(options: { focus?: boolean } = {}): void {
   const path = location.pathname;
+  document.title = path.startsWith('/privacy') ? 'Privacy — Headset Cue Check' : path.startsWith('/terms') ? 'Terms — Headset Cue Check' : 'Headset Cue Check — accessible listening setup';
   if (path === '/privacy' || path === '/terms') app.innerHTML = legalPage(path.slice(1) as 'privacy' | 'terms');
   else app.innerHTML = view === 'check' ? checkPage() : view === 'setup' ? setupPage() : view === 'card' ? cardPage() : homePage();
   bindEvents();
@@ -221,6 +222,11 @@ function bindEvents(): void {
     event.preventDefault(); history.pushState({}, '', link.pathname); view = 'home'; render({ focus: true });
   }));
   document.querySelector('#start-check')?.addEventListener('click', async () => {
+    const unfinished = sessions.find(item => !item.completedAt);
+    if (unfinished) {
+      if (!confirm(`Start a new check and discard the unfinished check at observation ${unfinished.currentStep + 1}?`)) return;
+      try { await removeSession(unfinished.id); } catch { /* the in-memory check can still start */ }
+    }
     player.stop(); session = createSession(); view = 'check'; await persist(); render({ focus: true });
   });
   document.querySelector('#resume-check')?.addEventListener('click', () => {

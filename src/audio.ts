@@ -7,12 +7,14 @@ export class CuePlayer {
   private timers: number[] = [];
   private buffers = new Map<string, AudioBuffer>();
   private style: NotificationStyle = 'balanced';
+  private generation = 0;
   onState?: (message: string, playing: boolean) => void;
 
   setNotificationStyle(style: NotificationStyle) { this.style = style; }
 
   async play(id: CueId): Promise<void> {
     this.stop();
+    const generation = this.generation;
     const ctx = this.context ?? new AudioContext();
     this.context = ctx;
     if (ctx.state === 'suspended') await ctx.resume();
@@ -22,14 +24,15 @@ export class CuePlayer {
       if (id === 'channels') await this.sequence([
         () => this.playFile('/audio/left-channel.wav', 0.75, -1),
         () => this.playFile('/audio/right-channel.wav', 0.75, 1)
-      ], 500);
-      if (id === 'mono') await this.toneSequence([-1, 1, 0], [440, 540, 490]);
+      ], 500, generation);
+      if (id === 'mono') await this.toneSequence([-1, 1, 0], [440, 540, 490], generation);
       if (id === 'level') await this.sequence([
         () => this.playFile('/audio/field-sentence.wav', 0.32, 0),
         () => this.playFile('/audio/field-sentence.wav', 0.72, 0)
-      ], 650);
-      if (id === 'interruption') await this.playInterruption();
+      ], 650, generation);
+      if (id === 'interruption') await this.playInterruption(generation);
       if (id === 'notification') await this.playNotification(this.style);
+      if (generation !== this.generation) return;
       this.onState?.(`${id[0].toUpperCase()}${id.slice(1)} cue finished.`, false);
     } catch (error) {
       this.onState?.('Audio could not play. Check site audio permission and your selected output device, then try again.', false);
@@ -38,9 +41,9 @@ export class CuePlayer {
   }
 
   stop(): void {
-    this.source?.stop();
+    this.generation += 1;
+    try { this.source?.stop(); } catch { /* already stopped */ }
     this.source = undefined;
-    this.timers.forEach(window.clearTimeout);
     this.timers = [];
   }
 
@@ -69,15 +72,17 @@ export class CuePlayer {
     });
   }
 
-  private async sequence(items: (() => Promise<void>)[], gap: number): Promise<void> {
+  private async sequence(items: (() => Promise<void>)[], gap: number, generation: number): Promise<void> {
     for (const play of items) {
+      if (generation !== this.generation) return;
       await play();
       await new Promise<void>(resolve => { const timer = window.setTimeout(resolve, gap); this.timers.push(timer); });
     }
   }
 
-  private async toneSequence(pans: number[], frequencies: number[]): Promise<void> {
+  private async toneSequence(pans: number[], frequencies: number[], generation: number): Promise<void> {
     for (let index = 0; index < pans.length; index += 1) {
+      if (generation !== this.generation) return;
       await this.tone(frequencies[index], pans[index], 0.42, 0.18);
       await new Promise<void>(resolve => { const timer = window.setTimeout(resolve, 260); this.timers.push(timer); });
     }
@@ -103,9 +108,9 @@ export class CuePlayer {
     for (const note of notes) { await this.tone(note, 0, 0.16, volume); }
   }
 
-  private async playInterruption(): Promise<void> {
+  private async playInterruption(generation: number): Promise<void> {
     const speech = this.playFile('/audio/interruption-sentence.wav', 0.62, 0);
-    const timer = window.setTimeout(() => { void this.playNotification('balanced'); }, 1250);
+    const timer = window.setTimeout(() => { if (generation === this.generation) void this.playNotification('balanced'); }, 1250);
     this.timers.push(timer);
     await speech;
   }

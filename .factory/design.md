@@ -64,4 +64,6 @@ Prompt sheet:
 
 Generated asset provenance: `assets/src/headset-specimen.png`, generated on 2026-08-28 with the Param Factory Azure image deployment (`factory-image`) using `/opt/fleet/lib/gen-image.sh`; original to this product under the project MIT license. The final prompt is stored beside the source as `assets/src/headset-specimen.prompt.json`. The public WebP derivative is reviewed for artifacts and optimized to ≤300 KB. The footer discloses AI-assisted generated imagery.
 
+The four speech WAV files were rendered locally from original product copy with eSpeak NG 1.51 (`en-us`, 150–158 words per minute), then committed so the listening test remains deterministic and offline. They contain no third-party recording or remote voice service.
+
 All other marks (leaf bullets, audio-channel diagram, app icons) are original code-authored SVG/CSS geometry so they remain sharp, small, and accessible.

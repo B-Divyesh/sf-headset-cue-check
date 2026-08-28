@@ -1,5 +1,5 @@
-const VERSION = 'hcc-shell-v1';
-const ASSET_CACHE = 'hcc-assets-v1';
+const VERSION = 'hcc-shell-v2';
+const ASSET_CACHE = 'hcc-assets-v2';
 const CORE = [
   '/manifest.webmanifest', '/offline.html', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png',
   '/assets/headset-specimen.webp', '/audio/field-sentence.wav', '/audio/left-channel.wav',
@@ -39,13 +39,13 @@ self.addEventListener('fetch', event => {
         if (response.ok) (await caches.open(VERSION)).put(request, response.clone());
         return response;
       } catch {
-        return (await caches.match('/')) || (await caches.match('/offline.html'));
+        return (await caches.match('/', { ignoreVary: true })) || (await caches.match('/offline.html', { ignoreVary: true }));
       }
     })());
     return;
   }
   event.respondWith((async () => {
-    const cached = await caches.match(request);
+    const cached = await caches.match(url.pathname, { ignoreSearch: true, ignoreVary: true });
     if (cached) return cached;
     try {
       const response = await fetch(request);
