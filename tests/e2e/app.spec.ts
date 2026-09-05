@@ -9,12 +9,39 @@ async function seriousViolations(page: Page) {
 
 async function completeCheck(page: Page, headsetName = 'Office headset') {
   await page.getByRole('button', { name: /Start (a sample|your) check/ }).click();
+  await completeObservations(page);
+  await page.getByLabel('Headset name').fill(headsetName);
+  await page.getByRole('button', { name: 'Create setup card' }).click();
+}
+
+async function completeObservations(page: Page) {
   for (let index = 0; index < 6; index += 1) {
     await page.locator('.rating-options label').first().click();
     await page.getByRole('button', { name: index === 5 ? 'Record settings' : 'Save and continue' }).click();
   }
-  await page.getByLabel('Headset name').fill(headsetName);
-  await page.getByRole('button', { name: 'Create setup card' }).click();
+}
+
+async function horizontalOverflow(page: Page) {
+  return page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+    offenders: [...document.querySelectorAll<HTMLElement>('body *')]
+      .map(element => {
+        const bounds = element.getBoundingClientRect();
+        return {
+          selector: `${element.tagName.toLowerCase()}${element.id ? `#${element.id}` : ''}${element.classList.length ? `.${[...element.classList].join('.')}` : ''}`,
+          left: Math.round(bounds.left * 100) / 100,
+          right: Math.round(bounds.right * 100) / 100,
+          width: Math.round(bounds.width * 100) / 100,
+        };
+      })
+      .filter(item => !item.selector.includes('.sr-only') && (item.left < 0 || item.right > document.documentElement.clientWidth))
+  }));
+}
+
+async function expectNoHorizontalOverflow(page: Page) {
+  const result = await horizontalOverflow(page);
+  expect(result.scrollWidth, JSON.stringify(result.offenders)).toBeLessThanOrEqual(result.clientWidth);
 }
 
 test('home and legal pages meet the serious accessibility baseline', async ({ page }) => {
@@ -29,7 +56,7 @@ test('home and legal pages meet the serious accessibility baseline', async ({ pa
   await page.emulateMedia({ colorScheme: 'dark' });
   expect(await seriousViolations(page)).toEqual([]);
   await page.getByRole('link', { name: 'Privacy', exact: true }).first().click();
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('stay yours');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('How Headset Cue Check handles your data');
   await expect(page).toHaveTitle('Privacy — Headset Cue Check');
   expect(await seriousViolations(page)).toEqual([]);
   expect(errors).toEqual([]);
@@ -39,10 +66,10 @@ test('supports 200% text, reduced motion, and narrow screens without overflow', 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.evaluate(() => { document.documentElement.style.fontSize = '32px'; });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  await expectNoHorizontalOverflow(page);
   await expect(page.getByRole('link', { name: 'Try it with sample data' })).toBeVisible();
   await page.getByRole('button', { name: 'Start your check' }).click();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  await expectNoHorizontalOverflow(page);
   expect(await page.locator('.observation').evaluate(node => Number.parseFloat(getComputedStyle(node).animationDuration))).toBeLessThanOrEqual(0.001);
 });
 
@@ -75,7 +102,7 @@ test('@claim:offline-reload reloads the demo and plays bundled audio offline', a
     return { active: Boolean(registration?.active), caches: await caches.keys() };
   });
   expect(updateState.active).toBe(true);
-  expect(updateState.caches).toContain('hcc-shell-v3');
+  expect(updateState.caches).toContain('hcc-shell-v4');
 });
 
 test('@claim:keyboard-access supports keyboard use, visible import focus, and 44px targets', async ({ page }) => {
@@ -134,6 +161,35 @@ test('@claim:local-privacy keeps a complete demo flow same-origin and out of web
   expect(requests.every(request => request.method === 'GET')).toBe(true);
   expect(await context.cookies()).toEqual([]);
   expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 0, session: 0 });
+});
+
+test('@claim:non-diagnostic-results keeps the check observational and shows its limits', async ({ page }) => {
+  await page.goto('/demo');
+  const notice = page.getByRole('note');
+  await expect(notice).toContainText('not a hearing or audiology test');
+  await expect(notice).toContainText('does not diagnose or certify hardware');
+  await page.getByRole('button', { name: 'Open card' }).click();
+  await expect(page.locator('.result-list li')).toHaveCount(6);
+  await expect(page.locator('.card-limit')).toContainText('does not verify hardware routing or system settings');
+  await expect(page.locator('.card-limit')).toContainText('not a hearing test');
+  await expect(page.locator('main')).not.toContainText(/\bpass(?:ed)?\b|\bfail(?:ed)?\b/i);
+});
+
+test('@claim:manual-routing records settings entered by the user without identifying a device', async ({ page }) => {
+  await page.goto('/demo');
+  await expect(page.getByRole('note')).toContainText('Audio follows the output selected in your operating system');
+  await expect(page.getByRole('note')).toContainText('cannot identify that device or change its settings');
+  await page.getByRole('button', { name: 'Start a sample check' }).click();
+  await completeObservations(page);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Record the settings you can reproduce.');
+  await expect(page.getByLabel('Headset name')).toHaveValue('');
+  await page.getByLabel('Headset name').fill('User-selected USB headset');
+  await page.locator('input[name="systemVolume"]').fill('27');
+  await page.locator('input[name="screenReaderVolume"]').fill('63');
+  await page.getByRole('button', { name: 'Create setup card' }).click();
+  await expect(page.locator('.setup-card')).toContainText('User-selected USB headset');
+  await expect(page.locator('.setting-values')).toContainText('27%');
+  await expect(page.locator('.setting-values')).toContainText('63%');
 });
 
 test('@claim:free-use presents free use with no payment or account path', async ({ page }) => {
@@ -207,6 +263,6 @@ test('rejects the verifier corrupt import and recovers a corrupt stored row', as
 test('unknown routes render the designed 404 page', async ({ page }) => {
   await page.goto('/missing-listening-path');
   await expect(page).toHaveTitle('Page not found — Headset Cue Check');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('not in the guide');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('This page was not found');
   await expect(page.getByRole('link', { name: 'Return to Headset Cue Check' })).toBeVisible();
 });

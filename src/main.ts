@@ -19,7 +19,7 @@ let view: View = 'home';
 let storageError = '';
 let recentlyRemoved: CheckSession | undefined;
 const demoMode = location.pathname.replace(/\/$/, '') === '/demo' || new URLSearchParams(location.search).get('demo') === '1';
-const BUILD_ID = '1.0.1-repair.1';
+const BUILD_ID = '1.0.2-repair.2';
 
 const escapeHtml = (value: string | number) => String(value).replace(/[&<>'"]/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
@@ -54,11 +54,11 @@ function shell(content: string): string {
     ${content}
     <footer>
       <p><span aria-hidden="true">❧</span> Headset listening checks for screen-reader users and accessibility staff.</p>
-      <p>Built by Param Factory · ${BUILD_ID}<br />Original AI-assisted field-guide illustration.</p>
+      <p>Built by Param Factory · ${BUILD_ID}<br />The illustration was generated for this product.</p>
       <nav aria-label="Footer"><a href="/demo">Demo</a><a href="/privacy" data-route>Privacy</a><a href="/terms" data-route>Terms</a></nav>
     </footer>
     <div id="live-status" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-    <div id="update-toast" class="toast is-hidden" role="status"><span>A fresh field guide is ready.</span><button id="reload-app">Reload</button></div>`;
+    <div id="update-toast" class="toast is-hidden" role="status"><span>An app update is ready.</span><button id="reload-app">Reload</button></div>`;
 }
 
 function homePage(): string {
@@ -67,22 +67,21 @@ function homePage(): string {
   return shell(`<main id="main">
     <section class="hero" aria-labelledby="page-title">
       <div class="hero-copy">
-        <p class="eyebrow">A six-observation listening guide</p>
+        <p class="eyebrow">Six headset cue observations</p>
         <h1 id="page-title" tabindex="-1">Check the headset cues your work depends on.</h1>
         <p class="lede">For screen-reader users and accessibility staff who need repeatable speech, channel, level, and alert settings.</p>
         <div class="hero-actions">
           ${demoMode ? `<button class="secondary" id="start-check">Start a sample check</button>` : `<a class="primary" href="/demo">Try it with sample data</a>${active ? `<button class="secondary" id="resume-check">Resume observation ${Math.min(active.currentStep + 1, 6)} of 6</button>` : `<button class="secondary" id="start-check">Start your check</button>`}`}
         </div>
         <ul class="hero-facts" aria-label="Product facts"><li>Free to use.</li><li>Your notes and cards stay in this browser.</li><li>Works offline after your first visit.</li></ul>
-        <div class="notice" role="note"><strong>This is not a hearing or audiology test.</strong> It does not diagnose, certify hardware, or change system settings. Your browser plays to the output selected in your operating system.</div>
+        <div class="notice" role="note"><strong>This is not a hearing or audiology test.</strong> It does not diagnose or certify hardware. Audio follows the output selected in your operating system. This app cannot identify that device or change its settings.</div>
       </div>
       <figure class="specimen-figure">
         <img src="/assets/headset-specimen.webp" width="1200" height="800" fetchpriority="high" decoding="async" alt="Over-ear headphones arranged on specimen paper beside two leaves and a tuning fork." />
-        <figcaption><span>Plate H–01</span> Listen, notice, record.</figcaption>
       </figure>
     </section>
     <section class="preflight" aria-labelledby="before-title">
-      <div><p class="section-number" aria-hidden="true">FIELD NOTE / HOW IT WORKS</p><h2 id="before-title">Complete the check in three steps</h2></div>
+      <div><p class="section-number" aria-hidden="true">HOW IT WORKS</p><h2 id="before-title">Complete the check in three steps</h2></div>
       <ol class="preflight-list">
         <li><span>1</span><div><strong>Select the headset</strong><p>Choose it in your operating system. Begin at a low volume.</p></div></li>
         <li><span>2</span><div><strong>Play and rate six cues</strong><p>Record what you notice about speech, channels, levels, and alerts.</p></div></li>
@@ -90,7 +89,7 @@ function homePage(): string {
       </ol>
     </section>
     <section class="library" aria-labelledby="library-title">
-      <div class="library-heading"><div><p class="section-number">YOUR LOCAL SPECIMENS</p><h2 id="library-title">Saved setup cards</h2></div>
+      <div class="library-heading"><div><p class="section-number">YOUR SAVED DATA</p><h2 id="library-title">Saved setup cards</h2></div>
         <div class="library-actions"><button class="secondary small" id="export-all" ${completed.length ? '' : 'disabled'}>Export JSON</button><label class="secondary small file-label"><span>Import JSON</span><input id="import-file" class="file-input" type="file" accept="application/json,.json" /></label></div>
       </div>
       ${storageError ? `<p class="error" role="alert">${escapeHtml(storageError)} Your check can continue, but it may not survive closing this tab.</p>` : ''}
@@ -108,7 +107,7 @@ function checkPage(): string {
   const step = STEPS[session.currentStep];
   const answer = session.answers.find(item => item.stepId === step.id);
   return shell(`<main id="main" class="check-layout">
-    <aside class="specimen-index" aria-label="Observation index"><p>SPECIMEN INDEX</p><ol>${STEPS.map((item, index) => `<li class="${index === session!.currentStep ? 'current' : ''} ${session!.answers.some(answerItem => answerItem.stepId === item.id) ? 'done' : ''}"><span>${item.specimen}</span>${escapeHtml(item.title)}${index < session!.currentStep ? '<span class="sr-only"> completed</span>' : ''}</li>`).join('')}</ol></aside>
+    <aside class="specimen-index" aria-label="Observation index"><p>OBSERVATIONS</p><ol>${STEPS.map((item, index) => `<li class="${index === session!.currentStep ? 'current' : ''} ${session!.answers.some(answerItem => answerItem.stepId === item.id) ? 'done' : ''}"><span>${item.specimen}</span>${escapeHtml(item.title)}${index < session!.currentStep ? '<span class="sr-only"> completed</span>' : ''}</li>`).join('')}</ol></aside>
     <section class="observation" aria-labelledby="observation-title">
       ${progressMarkup(session.currentStep)}
       <div class="observation-heading"><span class="leaf-number" aria-hidden="true">${step.specimen}</span><div><p class="eyebrow">Listening observation</p><h1 id="observation-title" tabindex="-1">${escapeHtml(step.title)}</h1></div></div>
@@ -139,7 +138,7 @@ function setupPage(): string {
   const defaults = session.settings ?? { ...DEFAULT_SETTINGS, notificationStyle: selected === 'gentle' || selected === 'distinct' ? `${selected[0].toUpperCase()}${selected.slice(1)}` as SetupSettings['notificationStyle'] : 'Balanced' };
   const select = (value: string, current: string) => value === current ? 'selected' : '';
   return shell(`<main id="main" class="setup-page">
-    <p class="eyebrow">Final field note</p><h1 id="setup-title" tabindex="-1">Record the settings you can reproduce.</h1>
+    <p class="eyebrow">Final step</p><h1 id="setup-title" tabindex="-1">Record the settings you can reproduce.</h1>
     <p class="lede">Copy the values from your operating system and screen reader. This guide cannot read or change them for you.</p>
     <form id="settings-form" class="settings-form">
       <div class="form-section"><h2>Device</h2><div class="field-grid">
@@ -167,9 +166,9 @@ function cardPage(): string {
   if (!session?.settings) return homePage();
   const settings = session.settings;
   return shell(`<main id="main" class="card-page">
-    <div class="card-intro"><div><p class="eyebrow">Setup specimen complete</p><h1 id="card-title" tabindex="-1">Your repeatable headset setup</h1><p>Saved only in this browser on ${formatDate(session.completedAt ?? session.updatedAt)}.</p></div><span class="completion-mark" aria-hidden="true">✓</span></div>
+    <div class="card-intro"><div><p class="eyebrow">Check complete</p><h1 id="card-title" tabindex="-1">Your repeatable headset setup</h1><p>Saved only in this browser on ${formatDate(session.completedAt ?? session.updatedAt)}.</p></div><span class="completion-mark" aria-hidden="true">✓</span></div>
     <article class="setup-card" aria-labelledby="setup-card-title">
-      <header><div><p>HEADSET CUE CHECK / LOCAL CARD</p><h2 id="setup-card-title">${escapeHtml(settings.deviceName)}</h2></div><span>${escapeHtml(settings.platform)}</span></header>
+      <header><div><p>HEADSET CUE CHECK / SETUP CARD</p><h2 id="setup-card-title">${escapeHtml(settings.deviceName)}</h2></div><span>${escapeHtml(settings.platform)}</span></header>
       <section class="setting-values" aria-label="Recorded settings"><dl>
         <div><dt>System output</dt><dd>${settings.systemVolume}%</dd></div><div><dt>Screen-reader speech</dt><dd>${settings.screenReaderVolume}%</dd></div>
         <div><dt>Mono audio</dt><dd>${settings.monoAudio}</dd></div><div><dt>Spatial audio</dt><dd>${settings.spatialAudio}</dd></div>
@@ -186,13 +185,13 @@ function cardPage(): string {
 
 function legalPage(kind: 'privacy' | 'terms'): string {
   const privacy = kind === 'privacy';
-  return shell(`<main id="main" class="legal-page"><p class="eyebrow">${privacy ? 'Privacy note' : 'Terms of use'}</p><h1 tabindex="-1">${privacy ? 'Your listening notes stay yours.' : 'A practical guide, not a diagnosis.'}</h1><p class="updated">Effective 28 August 2026</p>
+  return shell(`<main id="main" class="legal-page"><p class="eyebrow">${privacy ? 'Privacy' : 'Terms of use'}</p><h1 tabindex="-1">${privacy ? 'How Headset Cue Check handles your data' : 'Terms for using Headset Cue Check'}</h1><p class="updated">Effective 5 September 2026</p>
     ${privacy ? `<section><h2>What is stored</h2><p>Headset Cue Check stores your cue ratings, optional notes, setup values, and completion dates in IndexedDB in this browser. Nothing is sent to Sociobot or another server. The app includes no analytics, advertising, tracking pixels, accounts, or third-party runtime scripts.</p></section><section><h2>Your controls</h2><p>You can export your cards as JSON, import them on another device, or remove them from the home screen. Clearing this site’s browser data also removes every saved card. An exported file is outside the app’s control, so keep it where you are comfortable.</p></section><section><h2>Network and audio</h2><p>The first visit downloads the app shell, illustration, and speech samples. A service worker then keeps those resources for offline use. Audio is generated or played locally. The browser may expose ordinary request metadata, such as an IP address, to the hosting provider when files are downloaded; the product does not retain a user profile.</p></section>` : `<section><h2>Purpose and limits</h2><p>This free utility helps you observe how a headset handles speech, channels, levels, and alerts in your own workflow. It is not a medical or audiology test, hearing protection advice, hardware certification, or a substitute for a qualified professional.</p></section><section><h2>Use safely</h2><p>Begin at low volume and stop if sound feels uncomfortable. You remain responsible for selecting the intended audio output and confirming operating-system settings. Browsers cannot reliably identify the physical device receiving audio.</p></section><section><h2>No warranty</h2><p>The software is provided “as is,” without warranty of any kind, as described in the MIT License. Results are personal observations, not pass/fail findings. Do not rely on this utility alone for safety-critical or regulated work.</p></section>`}
     <p><a class="legal-return" href="/" data-route>Return to Headset Cue Check</a></p></main>`);
 }
 
 function notFoundPage(): string {
-  return shell(`<main id="main" class="legal-page not-found"><p class="eyebrow">Field note / 404</p><h1 tabindex="-1">This listening path is not in the guide.</h1><p>The address may have changed. Return home to start a headset check or open the sample.</p><p><a class="legal-return" href="/" data-route>Return to Headset Cue Check</a></p></main>`);
+  return shell(`<main id="main" class="legal-page not-found"><p class="eyebrow">404 error</p><h1 tabindex="-1">This page was not found</h1><p>The address may have changed. Return home to start a headset check or open the sample.</p><p><a class="legal-return" href="/" data-route>Return to Headset Cue Check</a></p></main>`);
 }
 
 function render(options: { focus?: boolean } = {}): void {

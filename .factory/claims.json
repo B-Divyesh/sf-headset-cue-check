@@ -61,5 +61,19 @@
     "where": "README and interface",
     "test": "npm run test:e2e -- --grep @claim:keyboard-access",
     "sandbox": "fresh /demo context; tab to Import JSON; assert live regions, visible focus, and target size; operate the check with keyboard; measure the legal return link"
+  },
+  {
+    "id": "non-diagnostic-results",
+    "claim": "The check records personal observations; it does not diagnose hearing, produce pass or fail results, or certify hardware",
+    "where": "landing limit, saved setup card, terms, and README",
+    "test": "npm run test:e2e -- --grep @claim:non-diagnostic-results",
+    "sandbox": "fresh /demo context; verify the pre-check limits; open the populated sample card; assert six observations, the hardware and hearing limits, and no pass or fail result"
+  },
+  {
+    "id": "manual-routing",
+    "claim": "Audio follows the operating-system output; the app cannot identify that device or change or verify its settings",
+    "where": "landing limit, setup form, saved setup card, terms, and README",
+    "test": "npm run test:e2e -- --grep @claim:manual-routing",
+    "sandbox": "fresh /demo context; verify the routing limit; complete the observations; assert the headset name starts blank; enter distinct settings and assert the card records those user-entered values"
   }
 ]

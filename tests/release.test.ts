@@ -58,7 +58,7 @@ describe('release contracts', () => {
     expect(manifest.display).toBe('standalone');
     expect(manifest.icons.some(icon => icon.sizes === '192x192')).toBe(true);
     expect(manifest.icons.some(icon => icon.sizes === '512x512' && icon.purpose.includes('maskable'))).toBe(true);
-    expect(serviceWorkerText).toContain("const VERSION = 'hcc-shell-v3'");
+    expect(serviceWorkerText).toContain("const VERSION = 'hcc-shell-v4'");
     expect(serviceWorkerText).toContain("'/offline.css'");
   });
 });

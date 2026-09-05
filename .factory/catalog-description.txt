@@ -1,0 +1,1 @@
+Check speech, stereo, mono, levels, and alerts before relying on a headset.

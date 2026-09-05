@@ -2,7 +2,7 @@
   "name": "Headset Cue Check",
   "short_name": "Cue Check",
   "description": "An accessible, private guide for checking headset speech and notification cues.",
-  "start_url": "/?source=installed-v2",
+  "start_url": "/?source=installed-v3",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f4f0e5",

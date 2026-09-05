@@ -2,7 +2,7 @@
 
 Check speech, channels, levels, and alerts with a headset. This free guide is for screen-reader users and accessibility staff who need repeatable settings.
 
-The guide runs six listening observations and saves a setup card in browser IndexedDB. It does not diagnose hearing, certify hardware, identify the selected device, or change system settings.
+The guide runs six listening observations and saves a setup card in browser IndexedDB. It does not diagnose hearing or certify hardware. Audio follows the output selected in the operating system. The app cannot identify that device or change or verify its settings.
 
 Live product: <https://headset-cue-check.sociobot.in>
 
@@ -18,7 +18,7 @@ One-click sample: <https://headset-cue-check.sociobot.in/demo>
 - Removes a setup card with immediate undo.
 - Supports keyboard use, visible focus, screen-reader announcements, and touch targets at least 44 pixels high.
 
-Every public claim and its demo-driven browser test is listed in [`.factory/claims.json`](.factory/claims.json). The sample data and separate `headset-cue-check-demo` storage namespace are documented in [`.factory/demo.md`](.factory/demo.md).
+All 11 public claims and their demo-driven browser tests are listed in [`.factory/claims.json`](.factory/claims.json). The sample data and separate `headset-cue-check-demo` storage namespace are documented in [`.factory/demo.md`](.factory/demo.md).
 
 ## Run locally
 
@@ -41,7 +41,7 @@ npm run build
 npm run test:e2e
 ```
 
-Playwright 1.58.2 is pinned. Set `PLAYWRIGHT_BROWSERS_PATH` to the installed browser directory when needed. `npm run build` writes the static PWA to `dist/`, with `dist/index.html` at its root.
+Playwright 1.58.2 is pinned. Set `PLAYWRIGHT_BROWSERS_PATH` to the installed browser directory when needed. `npm run test:e2e` builds the production site before starting its preview server, so it also works directly after `npm ci`. `npm run build` writes the static PWA to `dist/`, with `dist/index.html` at its root.
 
 ## Deploy
 

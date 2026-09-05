@@ -70,9 +70,6 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .specimen-figure { position: relative; margin: 0; padding: 13px; background: var(--surface); box-shadow: var(--shadow); transform: rotate(1.1deg); }
 .specimen-figure::before { content: ""; position: absolute; z-index: 1; top: -13px; left: 48%; width: 94px; height: 28px; background: rgb(192 171 128 / 55%); transform: rotate(-3deg); }
 .specimen-figure img { display: block; width: 100%; height: auto; aspect-ratio: 3/2; object-fit: cover; filter: saturate(.86) contrast(.98); }
-.specimen-figure figcaption { display: flex; justify-content: space-between; gap: 16px; padding: 10px 4px 0; color: var(--muted); font: italic .875rem Georgia,serif; }
-.specimen-figure figcaption span { font-family: ui-sans-serif,system-ui,sans-serif; font-style: normal; font-weight: 850; letter-spacing: .08em; }
-
 .preflight, .library { max-width: 1296px; margin: 0 auto; padding: 72px clamp(20px, 5vw, 72px); border-top: 1px solid var(--rule); }
 .preflight { display: grid; grid-template-columns: .75fr 1.25fr; gap: clamp(32px, 6vw, 96px); }
 .preflight-list { list-style: none; margin: 0; padding: 0; }
@@ -136,7 +133,16 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .cue-variants { display: flex; gap: 10px; flex-wrap: wrap; }
 .cue-variants legend { width: 100%; }
 .cue-variants label { flex: 1 1 150px; }
-.cue-variants input, .rating-options input { position: absolute; opacity: 0; pointer-events: none; }
+.cue-variants input, .rating-options input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 1px;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
 .cue-variants label > span { display: grid; min-height: 62px; padding: 10px 12px; border: 1px solid var(--rule); cursor: pointer; }
 .cue-variants small { color: var(--muted); }
 .cue-variants input:checked + span { border: 2px solid var(--fern); background: color-mix(in srgb, var(--fern) 8%, transparent); }
