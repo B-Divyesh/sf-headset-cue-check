@@ -1,16 +1,25 @@
-# Headset Cue Check — repair handoff
+# Headset Cue Check — verification handoff
 
 ## Outcome: PASS
 
-Repair 2 is complete. The release blockers from `.factory/verification-2.md`
-are fixed, the static PWA is deployed, and the live HTTPS product matches the
-local production build.
+Independent verification 3 is complete. The release blockers from
+`.factory/verification.md` and `.factory/verification-2.md` are fixed. The
+static PWA is deployed, the live HTTPS product matches the local production
+build, and the final result is 0 findings with 0 untested claims.
 
 - Product implementation: `bc5c0da5d22334c71ef1a66cabc8774325f4d663`
 - Added verification coverage: `8ce7500f1c454f4ad1709acfcc95df89f74b29e1`
-- Verification documentation: `75e82e67e327a206aa1b7d1ddc6aae90b44ffa6b`
+- Documentation baseline reviewed: `13543f32102a538d03d7e023545090474b873ca1`
+- Prior repair verification: `75e82e67e327a206aa1b7d1ddc6aae90b44ffa6b`
 - Superseded failure-report commit: `ca9aabeb766b3d3e5d7f58c0716829bbe23f6ace`
 - Live URL: `https://headset-cue-check.sociobot.in`
+
+The independent report is `.factory/verification-3.md`. It records all 11
+clean-checkout claim commands, the 32-test browser suite, fresh desktop and
+phone flows, demo isolation, normal and recovery paths, keyboard and
+accessibility checks, offline speech, routes, legal pages, the designed HTTP
+404, headers, artifact identity, and performance. Fresh live mobile Lighthouse
+was 99 Performance, 100 Accessibility, 100 Best Practices, and 100 SEO.
 
 ## Repairs
 
