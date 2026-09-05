@@ -1,61 +1,67 @@
-# Headset Cue Check — verification handoff
+# Headset Cue Check — repair handoff
 
-## Outcome: FAIL
+## Outcome: PASS
 
-Independent QA of candidate `f41d98bfa0386972117188e28fba141f5ae70dc2` at
-`https://headset-cue-check.sociobot.in` found release blockers on 28 August
-2026 UTC. The live site byte-matches this candidate, but it is not releasable:
+Repair 2 is complete. The release blockers from `.factory/verification-2.md`
+are fixed, the static PWA is deployed, and the live HTTPS product matches the
+local production build.
 
-1. `npm run test:e2e` fails its desktop 200%-text/no-horizontal-overflow test
-   after starting a check (25/26 pass, 1 fails).
-2. Exact commands in `.factory/claims.json` fail from a clean clone after
-   `npm ci`, because `vite preview` requires an unbuilt `dist/`. They pass only
-   after a separate `npm run build`.
-
-Public limitation/routing claims also lack individual `claims.json` entries.
-No product code was changed during this verification. See
-[`verification-2.md`](verification-2.md) for commands, exact evidence, passed
-checks, and required remediation.
-
-## Historical builder handoff (superseded by the independent FAIL above)
+- Product implementation: `bc5c0da5d22334c71ef1a66cabc8774325f4d663`
+- Added verification coverage: `8ce7500f1c454f4ad1709acfcc95df89f74b29e1`
+- Superseded failure-report commit: `ca9aabeb766b3d3e5d7f58c0716829bbe23f6ace`
+- Live URL: `https://headset-cue-check.sociobot.in`
 
 ## Repairs
 
-- Added the mandatory claim inventory at `.factory/claims.json`: nine unique public claims, each mapped to exactly one `@claim:<id>` Playwright test using `/demo` and shipped sample data.
-- Added `/demo`, `/?demo=1` support, a realistic completed accessibility-lab card, the persistent required banner, Reset demo, and Start for real. Demo records use IndexedDB `headset-cue-check-demo`; real records use `headset-cue-check`.
-- Reworked the cold first screen to identify screen-reader users and accessibility staff, use an eight-word job headline, show a one-click sample action plus real action, and list free/privacy/offline facts. At 390×844 the sample action begins around y=372 and is fully visible.
-- Replaced shallow import checks with runtime validation of every session, rating, date, enum, length, range, and completion dependency. Existing invalid IndexedDB rows are removed during reads with a visible recovery message. Date rendering also has a defensive fallback.
-- Rebuilt Import JSON as a full-size transparent file input inside its visible label. Keyboard focus produces the designed 3 px rust outline on the 44 px label.
-- Added route-specific canonical, Open Graph, Twitter, apple-touch, title, and description metadata; a 1200×630 social image; `robots.txt`; `sitemap.xml`; `/demo`; and a designed `404.html` plus host-side 404 override.
-- Added `staticwebapp.config.json` with CSP, frame denial, nosniff, referrer and permissions policies, the manifest MIME type, immutable asset/audio/icon caching, and no-cache HTML/manifest/service-worker handling.
-- Removed the inline progress style so the CSP needs no unsafe style source. The offline fallback now uses a self-hosted stylesheet.
-- Raised the legal return link to a 44 px target. Mobile navigation now remains within 390 px at simulated 200% text.
-- Added `.factory/demo.md`, `.factory/copy-audit.md`, an updated README, ESLint/typecheck scripts, release-contract tests, and recorded social-art provenance in `.factory/design.md`.
+- Made `npm run test:e2e` build the production site before Playwright starts
+  `vite preview`. Every exact command in `.factory/claims.json` now works after
+  only `npm ci` in a clean checkout.
+- Fixed the 200% text-resize overflow at its cause. Hidden rating radios had
+  inherited `width: 100%` and intermittently extended the active check to
+  1601 px. Their accessible native inputs now use a 1 px hidden box while the
+  visible labels retain their focus treatment.
+- Replaced the boolean overflow check with a browser measurement that reports
+  the overflowing elements. The check passes before and after starting a real
+  check on desktop and 390 px mobile.
+- Added `non-diagnostic-results` and `manual-routing` to the public claim
+  inventory. Their demo tests verify six observational results, no pass/fail
+  outcome, visible medical/hardware limits, a blank user-entered device field,
+  and exact user-entered settings on the saved card.
+- Kept all earlier repair regressions: corrupt import rejection and recovery,
+  import focus, demo isolation, local privacy, offline audio, JSON portability,
+  copy/print, remove/undo, route metadata, security headers, caching, and the
+  designed 404.
+- Extended the keyboard test through all six observations and setup-card
+  creation. Added browser back/title/focus checks for real routes.
+- Replaced public metaphor labels with direct task language and refreshed the
+  copy audit. `.factory/catalog-description.txt` is verb-first, 76 bytes, and
+  is copied to `/work/.evidence/catalog-description.txt`.
+- Bumped the app to 1.0.2 and the service-worker caches to `hcc-shell-v4`.
 
-## Regression coverage
+## Clean-checkout and local verification
 
-- `tests/model.test.ts`: exact invalid completion-date shape, invalid answer values, invalid setting ranges, and a valid complete sample.
-- `tests/release.test.ts`: one test tag per claim; route metadata; 404; CSP/frame/MIME/cache policy; no inline page styles; manifest and service-worker versioning.
-- `tests/e2e/app.spec.ts`: full six-observation flow; offline reload/audio/update check; demo isolation/reset/exit; whole-flow same-origin privacy; JSON export/import; copy/print; remove/undo; keyboard/focus/touch targets; 200% text; reduced motion; desktop/mobile axe; designed 404; rejected corrupt import; and cleanup of a corrupt row already in IndexedDB.
-
-## Local verification — 28 August 2026 UTC
+Verified on 5 September 2026 UTC:
 
 - `npm ci`: pass; 181 packages installed; 0 vulnerabilities.
+- All 11 exact claim commands: pass from a fresh clone of the implementation;
+  each command built `dist/` itself and passed on desktop and mobile Chromium.
 - `npm test`: pass; 8/8 unit and release-contract tests.
 - `npm run typecheck`: pass.
 - `npm run lint`: pass.
 - `npm run build`: pass; `dist/index.html` present.
-- `npm run test:e2e`: pass; 26/26 across desktop Chromium and 390×844 Chromium.
-- Playwright axe: zero serious/critical findings on tested light/dark home, legal, setup, and saved-card states.
-- Keyboard: full first steps operate with Enter/Space; route h1 focus is restored; Import JSON has a visible 3 px outline; no trap.
-- Responsive: no horizontal overflow at 390 px, including simulated 200% root text; first sample action is above the fold; reduced-motion animation duration is ≤0.001 s.
-- Offline/update: `/demo` reloads offline, bundled WAV completes offline, cache `hcc-shell-v3` exists, and `registration.update()` completes after reconnecting.
-- Privacy: a complete demo workflow sends same-origin GET requests only; cookies, localStorage, and sessionStorage remain empty.
-- Local `verify-url.sh`: HTTP 200; title/lang/one h1/main/alt/buttons pass; zero console or page errors.
-- Local mobile Lighthouse 12.8.2: Performance 99, Accessibility 100, Best Practices 100, SEO 100; FCP 1.0 s, LCP 2.0 s, TBT 0 ms, CLS 0.
-- Production output: JS 37,744 B raw / 12,349 B gzip; CSS 19,119 B raw / 4,886 B gzip; hero WebP 110,538 B; social image 149,208 B; no runtime fonts.
+- `npm run test:e2e`: pass; 32/32 browser tests across desktop Chromium and a
+  390×844 Chromium viewport.
+- Axe WCAG A/AA integration: zero serious or critical findings on tested light,
+  dark, home, legal, active-check, setup, and populated-card states.
+- Factory `verify-url.sh`: pass on local `/`, `/demo`, `/privacy`, and `/terms`;
+  each had the correct title, `lang=en`, one h1, a main landmark, complete alt
+  and button labels, and zero console or page errors.
+- Local mobile Lighthouse 12.8.2: Performance 99, Accessibility 100, Best
+  Practices 100, SEO 100; FCP 1.0 s, LCP 2.0 s, TBT 10 ms, CLS 0.
+- Production output: JavaScript 37,623 B raw / 12,296 B gzip; CSS 18,887 B raw /
+  4,868 B gzip; hero WebP 110,538 B; social image 149,208 B; no runtime fonts.
 
-## Run
+Exact clean-checkout order:
 
 ```sh
 npm ci
@@ -66,21 +72,44 @@ npm run build
 npm run test:e2e
 ```
 
-Every claim command is listed in `.factory/claims.json` and is also covered by the complete browser run.
+The 11 individually runnable claim commands remain the `test` values in
+`.factory/claims.json`.
 
-## Deployment and known gaps
+## Deployment and live verification
 
-- Repair implementation commit: `c7bab47` (pushed to `origin/main` before deployment).
 - Deployment command: `/opt/fleet/lib/deploy-static.sh headset-cue-check dist`.
-- Azure Static Web Apps deployment ID: `b659777e-e45b-4a5a-8814-602357ae8df3`; status `Succeeded` at 10:34 UTC.
-- Live URL: `https://headset-cue-check.sociobot.in` returned HTTP 200 with the new no-cache, CSP, frame-denial, nosniff, referrer, and permissions policies.
-- Live `/manifest.webmanifest`: HTTP 200, `application/manifest+json`, `cache-control: no-cache`.
-- Live hashed JS: HTTP 200, `cache-control: public, max-age=31536000, immutable`.
-- Live `/sw.js`: HTTP 200, `cache-control: no-cache, no-store, must-revalidate`.
-- Live `/missing-listening-path`: HTTP 404 with `dist/404.html` byte identity.
-- `verify-url.sh` on live `/` and `/demo`: HTTP 200; correct titles, `lang=en`, one h1, main landmark, no missing alt, no unlabeled buttons, and zero console/page errors at desktop and 390 px.
-- Live fresh-browser offline demo: cache `hcc-shell-v3`, persistent demo banner, offline speech playback to completion, and zero console/page errors.
-- Live Lighthouse 12.8.2 mobile: Performance 100, Accessibility 100, Best Practices 100, SEO 100; FCP 0.9 s, LCP 1.7 s, TBT 0 ms, CLS 0.
-- SHA-256 matched local `dist/` for root HTML, demo HTML, 404 HTML, manifest, service worker, hashed JS/CSS, hero WebP, social JPG, speech WAV, app icon, robots, and sitemap.
+- Azure Static Web Apps deployment ID:
+  `72981133-878a-4b25-ae4c-2dfe4fb6a6ec`; status `Succeeded`.
+- Local/live bytes match for root, demo, privacy, terms, designed 404, manifest,
+  service worker, hashed JS/CSS, hero WebP, and bundled speech audio.
+- Fresh desktop and phone first screens show the job, audience, sample action,
+  and three facts before scrolling. The action begins at 530 px on a 720 px
+  desktop viewport and 410 px on an 844 px phone viewport.
+- Both fresh contexts opened the one-click sample, showed the persistent demo
+  label, and displayed the Windows “Accessibility lab headset” card with six
+  results and 38%/62% levels. Reset restored the sample; Start for real left
+  zero real setup cards.
+- Those desktop/phone flows made same-origin GET requests only, produced zero
+  console/page errors, and had zero serious/critical axe findings.
+- Live 200% text produced 1280 px scroll and client widths after starting a
+  check. Reduced-motion animation duration was 0.00001 s.
+- A fresh phone context reloaded `/demo` offline, used `hcc-shell-v4`, and
+  played the bundled speech cue to completion with no errors.
+- Route titles, focused h1 restoration, browser back, legal pages, links, and
+  the designed HTTP 404 passed. A deliberate 404 is recorded as expected.
+- Live security and cache headers include CSP with `frame-ancestors 'none'`,
+  frame denial, nosniff, referrer and permissions policies, no-cache HTML and
+  manifest, no-store service worker, and immutable hashed assets/audio.
+- Live mobile Lighthouse 12.8.2: Performance 100, Accessibility 100, Best
+  Practices 100, SEO 100; FCP 0.9 s, LCP 1.7 s, TBT 0 ms, CLS 0.
 
-No known release blocker or product gap remains. Backend, auth, billing, package-consumer, API rate-limit, and health-endpoint checks do not apply to this static local-first PWA.
+## Remaining limits and next steps
+
+No release blocker or known implementation defect remains. The documented
+product limits are intentional: this is not a hearing test or hardware
+certification, and browsers cannot identify, change, or verify the physical
+output device or operating-system settings. The 15-person pilot in the brief
+remains a post-release outcome study, not a build claim.
+
+Backend, shared database, auth, billing, health, rate-limit, CLI, library, and
+consumer-install checks do not apply to this free static local-first PWA.
