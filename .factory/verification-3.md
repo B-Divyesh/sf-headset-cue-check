@@ -4,7 +4,8 @@
 
 Candidate implementation `bc5c0da5d22334c71ef1a66cabc8774325f4d663`
 repairs every finding in `.factory/verification-2.md`. Verification coverage
-was extended in `8ce7500f1c454f4ad1709acfcc95df89f74b29e1`.
+was extended in `8ce7500f1c454f4ad1709acfcc95df89f74b29e1`. The verification record was
+committed as `75e82e67e327a206aa1b7d1ddc6aae90b44ffa6b`.
 
 ## Finding disposition
 

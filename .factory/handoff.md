@@ -8,6 +8,7 @@ local production build.
 
 - Product implementation: `bc5c0da5d22334c71ef1a66cabc8774325f4d663`
 - Added verification coverage: `8ce7500f1c454f4ad1709acfcc95df89f74b29e1`
+- Verification documentation: `75e82e67e327a206aa1b7d1ddc6aae90b44ffa6b`
 - Superseded failure-report commit: `ca9aabeb766b3d3e5d7f58c0716829bbe23f6ace`
 - Live URL: `https://headset-cue-check.sociobot.in`
 
