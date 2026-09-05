@@ -124,9 +124,43 @@ test('@claim:keyboard-access supports keyboard use, visible import focus, and 44
   await page.getByRole('button', { name: 'Save and continue' }).focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Left and right' })).toBeFocused();
+  const remainingHeadings = ['Left and right', 'Mono compatibility', 'Working level', 'Speech with an alert', 'Notification character'];
+  for (let index = 1; index < 6; index += 1) {
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(remainingHeadings[index - 1]);
+    const rating = page.locator('input[name="rating"]').first();
+    await rating.focus();
+    await page.keyboard.press('Space');
+    await expect(rating).toBeChecked();
+    await page.getByRole('button', { name: index === 5 ? 'Record settings' : 'Save and continue' }).focus();
+    await page.keyboard.press('Enter');
+    if (index < 5) await expect(page.getByRole('heading', { level: 1 })).toHaveText(remainingHeadings[index]);
+  }
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Record the settings you can reproduce.');
+  await page.getByLabel('Headset name').focus();
+  await page.keyboard.type('Keyboard-only headset');
+  await page.getByRole('button', { name: 'Create setup card' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.setup-card')).toContainText('Keyboard-only headset');
   await page.goto('/privacy');
   const returnLink = page.getByRole('link', { name: 'Return to Headset Cue Check' });
   expect((await returnLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+});
+
+test('route links set page titles and browser back restores the focused heading', async ({ page, request }) => {
+  for (const route of ['/', '/demo', '/privacy', '/terms']) {
+    const response = await request.get(route);
+    expect(response.status()).toBe(200);
+  }
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Privacy', exact: true }).first().click();
+  await expect(page).toHaveTitle('Privacy — Headset Cue Check');
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
+  await page.getByRole('link', { name: 'Terms', exact: true }).first().click();
+  await expect(page).toHaveTitle('Terms — Headset Cue Check');
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
+  await page.goBack();
+  await expect(page).toHaveTitle('Privacy — Headset Cue Check');
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
 });
 
 test('@claim:demo-isolation loads, resets, and exits sample data without touching real storage', async ({ page }) => {
